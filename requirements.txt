@@ -1,4 +1,4 @@
-openai
+ollama
 pypdf
 tiktoken
 python-dotenv

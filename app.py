@@ -26,9 +26,7 @@ if "chat_history" not in st.session_state:
 # Sidebar for Configuration
 with st.sidebar:
     st.header("Configuration")
-    st.info("Using OpenAI (GPT-3.5)")
-    
-    api_key = st.text_input("Enter OpenAI API Key", type="password")
+    st.info("Using Local Ollama (Phi-3)")
     
     st.header("Document Upload")
     uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
@@ -44,11 +42,8 @@ with st.sidebar:
                         tmp_file.write(uploaded_file.getvalue())
                         tmp_path = tmp_file.name
 
-                    if not api_key:
-                        st.error("Please enter your OpenAI API Key first.")
-                    else:
-                        # Initialize Engine
-                        st.session_state.rag_engine = RAGEngine(api_key=api_key)
+                    # Initialize Engine
+                    st.session_state.rag_engine = RAGEngine()
                     num_chunks = st.session_state.rag_engine.ingest_pdf(tmp_path)
                     
                     st.success(f"Ingested {num_chunks} chunks successfully!")
