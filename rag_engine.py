@@ -2,7 +2,8 @@ import os
 import json
 import math
 from pypdf import PdfReader
-import ollama
+import openai
+from openai import OpenAI
 import tiktoken
 from typing import List, Tuple, Dict
 
@@ -66,22 +67,21 @@ class SimpleVectorStore:
                 self.documents = []
 
 class RAGEngine:
-    def __init__(self):
-        # Switched to phi3 for better performance on lower RAM
-        self.model_name = "phi3" 
-        # We don't need an API Key for Ollama
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.client = OpenAI(api_key=api_key)
+        self.model_name = "gpt-3.5-turbo"
         
         # Use SimpleVectorStore
         self.db = SimpleVectorStore()
         
     def get_embedding(self, text: str) -> List[float]:
         # Ollama Embeddings
-        # Ensure llama3 is pulled: `ollama pull llama3`
         try:
-            response = ollama.embeddings(model=self.model_name, prompt=text)
-            return response['embedding']
+            response = self.client.embeddings.create(input=text, model="text-embedding-3-small")
+            return response.data[0].embedding
         except Exception as e:
-            print(f"Ollama Embedding Error: {e}")
+            print(f"OpenAI Embedding Error: {e}")
             return []
 
     def recursive_split(self, text, chunk_size=1000, chunk_overlap=100) -> List[str]:
@@ -184,12 +184,11 @@ User Question: {query}
 """
 
         # 4. Generate Response (Task 1 & 2)
-        # Added options to limit context window (save RAM)
-        response = ollama.chat(
+        response = self.client.chat.completions.create(
             model=self.model_name, 
             messages=[{'role': 'user', 'content': final_prompt}],
-            options={'num_ctx': 4096} 
+            temperature=0.7
         )
         
-        answer = response['message']['content']
+        answer = response.choices[0].message.content
         return answer, sources
